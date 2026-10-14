@@ -17,14 +17,17 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import org.jetbrains.annotations.Async
+import kotlin.contracts.contract
 
 @Composable
 fun FotoScreen(
@@ -47,7 +50,15 @@ fun FotoScreen(
             },
         animationSpec = tween(2000)
     )
-
+    // CAMARA!!!
+    val context = LocalContext.current
+    var uriPendiente by rememberSaveable() { mutableStateOf<Uri?>(null) }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = TakePicture()
+    ) { fotoTomada ->
+        if (fotoTomada) imagenUri = uriPendiente
+        uriPendiente = null
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -67,6 +78,7 @@ fun FotoScreen(
                 else "Selecciona una foto"
             )
         }
+        // BOTON PARA ALMACENAMIENTO
         Button(
             onClick = {
                 selectorFotos.launch(
@@ -81,6 +93,25 @@ fun FotoScreen(
         ) {
             Text("Seleccionar fotografía")
         }
+
+        // BOTON PARA CAMARA
+        Button(
+            onClick = {
+                try {
+                    val nuevaUri = crearUriFotografia(context)
+                    uriPendiente = nuevaUri
+                    cameraLauncher.launch(nuevaUri)
+                } catch (e: Exception) {
+                    uriPendiente = null
+                    e.printStackTrace()
+                }
+            }
+        ) {
+            Text("Tomar fotografía")
+        }
+
+
+        // IMAGEN CARGADA
         AnimatedVisibility(
             visible = imagenUri != null,
             enter = fadeIn(
@@ -105,7 +136,7 @@ fun FotoScreen(
             visible = imagenUri != null,
             enter = fadeIn(
                 animationSpec = tween(2000)
-            ) + expandVertically (tween(2000))
+            ) + expandVertically(tween(2000))
         )
         {
             OutlinedButton(
