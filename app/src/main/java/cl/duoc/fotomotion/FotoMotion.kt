@@ -1,15 +1,51 @@
 package cl.duoc.fotomotion
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import org.jetbrains.annotations.Async
 
 @Composable
 fun FotoScreen(
     modifier: Modifier = Modifier
 ) {
+    var imagenUri by remember { mutableStateOf<Uri?>(null) }
+    // LAUNCHER DE PHOTOPICKER
+    val selectorFotos = rememberLauncherForActivityResult(
+        contract = PickVisualMedia()
+    ) { uri ->
+        if (uri != null) imagenUri = uri
+    }
+    //Definimos un color cambiante
+    val colorBoton by animateColorAsState(
+        targetValue =
+            if(imagenUri!=null){
+                Color(0xFFFF0000)
+            }else{
+                Color(0xFF00DC0F)
+            },
+        animationSpec = tween(2000)
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -22,9 +58,39 @@ fun FotoScreen(
             style = MaterialTheme.typography.headlineMedium
         )
         Button(
-            onClick = { }
+            onClick = {
+                selectorFotos.launch(
+                    PickVisualMediaRequest(
+                        PickVisualMedia.ImageOnly
+                    )
+                )
+            },
+            colors = ButtonDefaults.buttonColors(
+                colorBoton
+            )
         ) {
             Text("Seleccionar fotografía")
         }
+        AnimatedVisibility(
+            visible = imagenUri != null,
+            enter = fadeIn(
+                animationSpec = tween(3000)
+            ) + expandVertically(
+                animationSpec = tween(3000)
+            ),
+            exit = fadeOut() + shrinkOut()
+        )
+        {
+            AsyncImage(
+                model = imagenUri,
+                contentDescription = "Aqui hay una foto",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp)
+                    .clip(RoundedCornerShape(16.dp)),
+                contentScale = ContentScale.Fit
+            )
+        }
+
     }
 }
