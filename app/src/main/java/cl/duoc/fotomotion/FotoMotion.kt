@@ -5,8 +5,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.*
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -38,9 +40,9 @@ fun FotoScreen(
     //Definimos un color cambiante
     val colorBoton by animateColorAsState(
         targetValue =
-            if(imagenUri!=null){
+            if (imagenUri != null) {
                 Color(0xFFFF0000)
-            }else{
+            } else {
                 Color(0xFF00DC0F)
             },
         animationSpec = tween(2000)
@@ -57,6 +59,14 @@ fun FotoScreen(
             text = "FotoMotion",
             style = MaterialTheme.typography.headlineMedium
         )
+        Crossfade(
+            targetState = imagenUri != null
+        ) { tieneFoto ->
+            Text(
+                text = if (tieneFoto) "FotoSeleccionada"
+                else "Selecciona una foto"
+            )
+        }
         Button(
             onClick = {
                 selectorFotos.launch(
@@ -91,6 +101,22 @@ fun FotoScreen(
                 contentScale = ContentScale.Fit
             )
         }
+        AnimatedVisibility(
+            visible = imagenUri != null,
+            enter = fadeIn(
+                animationSpec = tween(2000)
+            ) + expandVertically (tween(2000))
+        )
+        {
+            OutlinedButton(
+                onClick = {
+                    imagenUri = null
+                }
+            ) {
+                Text("Quitar foto")
+            }
+        }
+
 
     }
 }
